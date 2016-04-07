@@ -8,6 +8,9 @@ import sys
 sys.path.append( "../tools/" )
 from parse_out_email_text import parseOutText
 
+#from nltk.corpus import stopwords
+#sw=stopwords.words("english")
+
 """
     Starter code to process the emails from Sara and Chris to extract
     the features and get the documents ready for classification.
@@ -22,12 +25,12 @@ from parse_out_email_text import parseOutText
     The data is stored in lists and packed away in pickle files at the end.
 """
 
-
 from_sara  = open("from_sara.txt", "r")
 from_chris = open("from_chris.txt", "r")
 
 from_data = []
 word_data = []
+drop_words = ["sara", "shackleton", "chris", "germani"]
 
 ### temp_counter is a way to speed up the development--there are
 ### thousands of emails from Sara and Chris, so running over all of them
@@ -36,26 +39,41 @@ word_data = []
 ### can iterate your modifications quicker
 temp_counter = 0
 
-
 for name, from_person in [("sara", from_sara), ("chris", from_chris)]:
     for path in from_person:
         ### only look at first 200 emails when developing
         ### once everything is working, remove this line to run over full dataset
         temp_counter += 1
-        if temp_counter < 200:
+        if temp_counter >= 0:# < 200:
             path = os.path.join('..', path[:-1])
             print path
             email = open(path, "r")
 
             ### use parseOutText to extract the text from the opened email
+            text = parseOutText(email)
+            #word_array = text.split()
 
             ### use str.replace() to remove any instances of the words
             ### ["sara", "shackleton", "chris", "germani"]
 
+            #words = []
+            #for word in word_array:
+            #    if word not in drop_words: # and word not in sw:
+            #        words.append(word)
+
+            #text = ' '.join(words)
+            for word in drop_words:
+                if (word in text):
+                    text = text.replace(word, "")
+
             ### append the text to word_data
+            word_data.append(text)
 
             ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris
-
+            if (name == "sara"):
+                from_data.append(0)
+            elif (name == "chris"):
+                from_data.append(1)
 
             email.close()
 
@@ -63,13 +81,21 @@ print "emails processed"
 from_sara.close()
 from_chris.close()
 
+print "word_data[152]=", word_data[152]
+
 pickle.dump( word_data, open("your_word_data.pkl", "w") )
 pickle.dump( from_data, open("your_email_authors.pkl", "w") )
 
-
-
-
-
 ### in Part 4, do TfIdf vectorization here
+#from sklearn.feature_extraction.text import CountVectorizer
+#vectorizer = CountVectorizer()
+#bag_of_words = vectorizer.fit_transform(word_data)
+#print vectorizer.vocabulary_.get("great")
 
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+vectorizer = TfidfVectorizer(stop_words="english")
+vectorizer.fit_transform(word_data)
+print "print len(word_data)=", len(word_data)
+feature_names = vectorizer.get_feature_names()
+print "len of get_feature_names()=", len(feature_names)
+print "feature_names[34597]=", feature_names[34597]
